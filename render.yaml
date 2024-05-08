@@ -1,6 +1,6 @@
 services:
   - name: extra-ed-db
-    type: docker
+    plan: starter
     env: 
       - key: POSTGRES_USER
         value: postgres
@@ -8,17 +8,17 @@ services:
         value: postgres
       - key: POSTGRES_DB
         value: extra-ed-db
-    plan: starter
     source:
-      image: postgres
-      ports:
-        - 5432:5432
-      volumes:
-        - name: extra-ed-db
-          path: /var/lib/postgresql/data
+      type: dockerfile
+      buildCommand: docker build -t extra-ed-db .
+      envVars:
+        - key: DATABASE_URL
+          fromService: extra-ed-db
+    ports:
+      - 5432
 
   - name: vectordb
-    type: docker
+    plan: starter
     env:
       - key: POSTGRES_DB
         value: pgvector-db
@@ -26,37 +26,37 @@ services:
         value: pgvector
       - key: POSTGRES_PASSWORD
         value: admin
-    plan: starter
     source:
-      image: pgvector/pgvector:pg16
-      ports:
-        - 5434:5432
-      volumes:
-        - name: init_sql
-          path: /docker-entrypoint/init.sql
-
-  - name: extra-ed-app-api
-    type: docker
-    plan: starter
-    source:
-      buildCommand: docker build -t extra-ed-app-api .
-      dockerfilePath: Dockerfile
-      port: 3000
+      type: dockerfile
+      buildCommand: docker build -t vectordb .
       envVars:
         - key: DATABASE_URL
-          fromService: extra-ed-db
-    scaling:
-      autopilot: true
+          fromService: vectordb
+    ports:
+      - 5434
+
+  - name: extra-ed-app-api
+    plan: starter
+    source:
+      type: dockerfile
+      buildCommand: docker build -t extra-ed-app-api .
+      dockerfilePath: Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromService: extra-ed-db
+    ports:
+      - 3000
 
   - name: pgadmin
-    type: docker
+    plan: starter
     env:
       - key: PGADMIN_DEFAULT_EMAIL
         value: naomdebele002@gmail.com
       - key: PGADMIN_DEFAULT_PASSWORD
         value: 1234567890
-    plan: starter
     source:
-      image: dpage/pgadmin4
-      ports:
-        - 8888:80
+      type: dockerfile
+      buildCommand: docker build -t pgadmin .
+      dockerfilePath: Dockerfile
+    ports:
+      - 8888
