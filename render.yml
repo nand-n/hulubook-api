@@ -1,0 +1,62 @@
+services:
+  - name: extra-ed-db
+    type: docker
+    env: 
+      - key: POSTGRES_USER
+        value: postgres
+      - key: POSTGRES_PASSWORD
+        value: postgres
+      - key: POSTGRES_DB
+        value: extra-ed-db
+    plan: starter
+    source:
+      image: postgres
+      ports:
+        - 5432:5432
+      volumes:
+        - name: extra-ed-db
+          path: /var/lib/postgresql/data
+
+  - name: vectordb
+    type: docker
+    env:
+      - key: POSTGRES_DB
+        value: pgvector-db
+      - key: POSTGRES_USER
+        value: pgvector
+      - key: POSTGRES_PASSWORD
+        value: admin
+    plan: starter
+    source:
+      image: pgvector/pgvector:pg16
+      ports:
+        - 5434:5432
+      volumes:
+        - name: init_sql
+          path: /docker-entrypoint/init.sql
+
+  - name: extra-ed-app-api
+    type: docker
+    plan: starter
+    source:
+      buildCommand: docker build -t extra-ed-app-api .
+      dockerfilePath: Dockerfile
+      port: 3000
+      envVars:
+        - key: DATABASE_URL
+          fromService: extra-ed-db
+    scaling:
+      autopilot: true
+
+  - name: pgadmin
+    type: docker
+    env:
+      - key: PGADMIN_DEFAULT_EMAIL
+        value: naomdebele002@gmail.com
+      - key: PGADMIN_DEFAULT_PASSWORD
+        value: 1234567890
+    plan: starter
+    source:
+      image: dpage/pgadmin4
+      ports:
+        - 8888:80
