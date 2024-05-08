@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  extra-ed-db:
+    image: postgres
+    container_name: extra-ed-db
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: extra-ed-db
+    volumes:
+      - extra-ed-db:/var/lib/postgresql/data
+
+  extra-ed-app-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: extra-ed-app-api
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      - extra-ed-db
+    volumes:
+      - ./:/app
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: naomdebele002@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 1234567890
+
+volumes:
+  extra-ed-db:
